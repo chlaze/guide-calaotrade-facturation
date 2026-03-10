@@ -6,26 +6,43 @@ function initializeHamburgerMenu() {
 
   if (!hamburgerToggle || !sidebar) return;
 
+  const syncMenuState = (isOpen) => {
+    hamburgerToggle.classList.toggle('active', isOpen);
+    hamburgerToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    sidebar.classList.toggle('open', isOpen);
+    document.body.classList.toggle('sidebar-open', isOpen && window.innerWidth < 900);
+  };
+
   hamburgerToggle.addEventListener('click', function() {
-    this.classList.toggle('active');
-    sidebar.classList.toggle('open');
+    syncMenuState(!sidebar.classList.contains('open'));
   });
 
   const sidebarLinks = sidebar.querySelectorAll('a');
   sidebarLinks.forEach(link => {
     link.addEventListener('click', function() {
-      hamburgerToggle.classList.remove('active');
-      sidebar.classList.remove('open');
+      syncMenuState(false);
     });
   });
 
   const mainContent = document.querySelector('.main-content');
   if (mainContent) {
     mainContent.addEventListener('click', function() {
-      hamburgerToggle.classList.remove('active');
-      sidebar.classList.remove('open');
+      syncMenuState(false);
     });
   }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') syncMenuState(false);
+  });
+
+  window.addEventListener('resize', function() {
+    if (window.innerWidth >= 900) {
+      document.body.classList.remove('sidebar-open');
+      hamburgerToggle.classList.remove('active');
+      hamburgerToggle.setAttribute('aria-expanded', 'false');
+      sidebar.classList.remove('open');
+    }
+  });
 }
 
 function clearLegacyDisplayStyles() {
@@ -108,11 +125,6 @@ function initializeSidebarNavigation() {
       const firstLink = document.querySelector('#section-' + sectionCode + '-subs .sidebar-link');
       if (firstLink) localStorage.setItem('fks-subsection', firstLink.getAttribute('data-subsection'));
 
-      if (window.innerWidth < 900) {
-        const sidebar = document.querySelector('.sidebar');
-        if (sidebar) sidebar.classList.remove('open');
-      }
-
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   });
@@ -142,6 +154,11 @@ document.addEventListener('click', function(e) {
   if (window.innerWidth < 900 && sidebar) {
     if (!sidebar.contains(e.target) && (!toggleBtn || !toggleBtn.contains(e.target))) {
       sidebar.classList.remove('open');
+      document.body.classList.remove('sidebar-open');
+      if (toggleBtn) {
+        toggleBtn.classList.remove('active');
+        toggleBtn.setAttribute('aria-expanded', 'false');
+      }
     }
   }
 });
